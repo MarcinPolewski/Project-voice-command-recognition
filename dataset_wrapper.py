@@ -95,6 +95,8 @@ class CommandsDataset(Dataset):
                 :, : self.target_number_of_samples
             ]  # truncate excess at the end
 
+        return sample
+
     def _preproces_sample(self, sample, sampling_rate):
         sample = self._resample(sample, sampling_rate)
         sample = self._mix_down(sample)
