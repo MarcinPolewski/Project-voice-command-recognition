@@ -1,3 +1,4 @@
+import os
 from torch.utils.data import Dataset
 import torchaudio
 from train_list_generator import Train_List_Generator
@@ -41,6 +42,11 @@ class CommandsDataset(Dataset):
 
     def _load_sample(self, sample_idx):
         sample_path = self.data[sample_idx][CommandsDataset.SAMPLE_PATH_IDX]
+
+        # Check if the file exists
+        if not os.path.exists(sample_path):
+            raise FileNotFoundError(f"File not found: {sample_path}")
+
         sample, sampling_rate = torchaudio.load(sample_path)
         sample.to(self.device)
 
@@ -107,6 +113,7 @@ class CommandsDataset(Dataset):
             for line in file:
                 sample_class = line.split("/")[0]
                 path = base_path + line
+                path = path.strip()
 
                 data_row = [path, sample_class]
                 data.append(data_row)
