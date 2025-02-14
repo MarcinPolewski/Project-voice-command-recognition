@@ -90,6 +90,8 @@ class CNN_2d(nn.Module):
 
 
 def main():
+    print(str(torchaudio.list_audio_backends()))
+
     device = "cpu"
     if torch.cuda.is_available():
         device = "cuda"
