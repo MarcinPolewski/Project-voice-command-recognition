@@ -75,7 +75,7 @@ class CNN_2d(nn.Module):
 
         # neural network:
         self.flatten = nn.Flatten()
-        self.linear = nn.Linear(128 * 5 * 4, len(constants.CLASS_MAPPINGS))
+        self.linear = nn.Linear(128 * 5 * 3, len(constants.CLASS_MAPPINGS))
         self.softmax = nn.Softmax(dim=1)
 
     def forward(self, input_data):
