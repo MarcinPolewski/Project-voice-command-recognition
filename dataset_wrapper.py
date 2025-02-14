@@ -1,3 +1,4 @@
+import os
 from torch.utils.data import Dataset
 import torchaudio
 from train_list_generator import Train_List_Generator
@@ -41,6 +42,11 @@ class CommandsDataset(Dataset):
 
     def _load_sample(self, sample_idx):
         sample_path = self.data[sample_idx][CommandsDataset.SAMPLE_PATH_IDX]
+
+        # Check if the file exists
+        if not os.path.exists(sample_path):
+            raise FileNotFoundError(f"File not found: {sample_path}")
+
         sample, sampling_rate = torchaudio.load(sample_path)
         sample.to(self.device)
 
@@ -89,6 +95,8 @@ class CommandsDataset(Dataset):
                 :, : self.target_number_of_samples
             ]  # truncate excess at the end
 
+        return sample
+
     def _preproces_sample(self, sample, sampling_rate):
         sample = self._resample(sample, sampling_rate)
         sample = self._mix_down(sample)
@@ -107,8 +115,26 @@ class CommandsDataset(Dataset):
             for line in file:
                 sample_class = line.split("/")[0]
                 path = base_path + line
+                path = path.strip()
 
                 data_row = [path, sample_class]
                 data.append(data_row)
 
         return data
+
+
+class CommandsTrainDataset(CommandsDataset):
+    def __init__(
+        self,
+        device,
+        target_sampling_rate,  # all returns samples will have this sr
+        target_number_of_samples,  # how many samples should target recording have
+        transformation,
+    ):
+        super().__init__(
+            "./train/train_list.txt",  # path to txt file fith paths of audio files for test/train/validation - for instance ./train/validation_list.txt
+            device,
+            target_sampling_rate,  # all returns samples will have this sr
+            target_number_of_samples,  # how many samples should target recording have
+            transformation,
+        )
