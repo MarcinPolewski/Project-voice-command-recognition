@@ -29,9 +29,15 @@ class CommandsDataset(Dataset):
 
     def __getitem__(self, item_idx):
         sound_sample, sampling_rate = self._load_sample(item_idx)
-        label = self.data[item_idx][CommandsDataset.CLASS_IDX]
-
+        label = self._get_label(item_idx)
         return sound_sample, label
+
+    def _get_label(self, sample_idx):
+        label_string = self.data[sample_idx][CommandsDataset.CLASS_IDX]
+        label_digit = constants.CLASS_MAPPINGS.index(
+            label_string
+        )  # throws error when not found
+        return label_digit
 
     def _load_sample(self, sample_idx):
         sample_path = self.data[sample_idx][CommandsDataset.SAMPLE_PATH_IDX]
