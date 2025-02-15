@@ -10,6 +10,11 @@ from collections.abc import Sequence
 from skopt import BayesSearchCV
 from skopt.space import Real, Integer
 
+import torch
+
+
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
 
 class XGBDataWrapper(Sequence):
     """
@@ -33,7 +38,7 @@ def getTrainingData() -> tuple:
         sample_rate=16000, n_fft=1024, hop_length=512, n_mels=64
     )
 
-    pytorchDataset = CommandsTrainDataset("cpu", 16000, 16000, transformation)
+    pytorchDataset = CommandsTrainDataset(DEVICE, 16000, 16000, transformation)
     trainingData = XGBDataWrapper(pytorchDataset, 0)
     trainingLabels = XGBDataWrapper(pytorchDataset, 1)
 
@@ -42,9 +47,15 @@ def getTrainingData() -> tuple:
 
 def createPipeline() -> Pipeline:
     steps = [
-        ('targetEncoder', TargetEncoder()),
-        ('model', XGBClassifier(random_state=7))
+        ('targetEncoder', TargetEncoder())
     ]
+    if DEVICE == "cuda":
+        steps.append(('model', XGBClassifier(random_state=7,
+                                             tree_method='gpu_hist',
+                                             predictor='gpu_predictor',
+                                             gpu_id=0)))
+    else:
+        steps.append(('model', XGBClassifier(random_state=7)))
     return Pipeline(steps=steps)
 
 
@@ -61,7 +72,7 @@ def createHyperparameterOptimization(pipeline):
         'model__gamma': Real(0.0, 10.0)
     }
 
-    return BayesSearchCV(pipeline, hyperParametersLimits, cv=3, n_iter=10,
+    return BayesSearchCV(pipeline, hyperParametersLimits, cv=2, n_iter=1,
                          scoring='roc_auc', random_state=7)
 
 
@@ -71,6 +82,8 @@ def main() -> None:
     pipe = createPipeline()
 
     search = createHyperparameterOptimization(pipe)
+
+    print(DEVICE)
 
     search.fit(trainingData, trainingLabels)
 
