@@ -5,6 +5,7 @@ import torchaudio
 from torchsummary import summary
 
 import constants
+from dataset_wrapper import CommandsTrainDataset
 
 
 class CNN_1d(nn.Module):
@@ -75,7 +76,70 @@ class CNN_1d(nn.Module):
         return predictions
 
 
+class CNN_1d_Trainer:
+    def __init__(self, device):
+        self.device = device
+
+    def _create_data_loader(self, dataset, batch_size):
+        return DataLoader(dataset, batch_size=batch_size)
+
+    def train(self, model, dataset, loss_function,
+              optimiser, epochs, batch_size):
+        data_loader = self._create_data_loader(dataset, batch_size)
+
+        for epoch in range(epochs):
+            print(f"training {epoch} epoch")
+
+            for input, target_output in data_loader:
+                # @TODO niepotrzebne przypisanie - juz w datasecie jest
+                input = input.to(self.device)
+                target_output = target_output.to(self.device)
+
+                # loss
+                model_output = model(input)
+                loss = loss_function(model_output, target_output)
+
+                # backpropagation
+                optimiser.zero_grad()  # reset gradient values
+                loss.backward()
+                optimiser.step()
+
+            # save model
+            torch.save(model.state_dict(), f"backup/cnn_1d_{epoch}")
+
+
 if __name__ == "__main__":
     model = CNN_1d()
     summary(model, input_size=(1, 16000))
-    
+
+    print(str(torchaudio.list_audio_backends()))
+
+    device = "cpu"
+    if torch.cuda.is_available():
+        device = "cuda"
+
+    trainer = CNN_1d_Trainer(device)
+    model = CNN_1d()
+    target_sampling_rate = 16000
+    target_number_of_samples = 16000
+    learning_rate = 0.01
+    epochs = 10
+    batch_size = 32
+    loss_function = nn.CrossEntropyLoss()
+    optimiser = torch.optim.Adam(model.parameters(), lr=learning_rate)
+
+    dataset = CommandsTrainDataset(
+        device=device,
+        target_sampling_rate=target_sampling_rate,
+        target_number_of_samples=target_number_of_samples,
+        transformation=None,
+    )
+
+    trainer.train(
+        model=model,
+        dataset=dataset,
+        loss_function=loss_function,
+        optimiser=optimiser,
+        epochs=epochs,
+        batch_size=batch_size,
+    )
