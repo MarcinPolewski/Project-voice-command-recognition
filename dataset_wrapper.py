@@ -51,7 +51,8 @@ class CommandsDataset(Dataset):
         sample.to(self.device)
 
         sample = self._preproces_sample(sample, sampling_rate)
-        sample = self.transformation(sample)
+        if self.transformation:
+            sample = self.transformation(sample)
         return sample, sampling_rate
 
     def _resample(self, sample, sampling_rate):
@@ -133,6 +134,23 @@ class CommandsTrainDataset(CommandsDataset):
     ):
         super().__init__(
             "./train/train_list.txt",  # path to txt file fith paths of audio files for test/train/validation - for instance ./train/validation_list.txt
+            device,
+            target_sampling_rate,  # all returns samples will have this sr
+            target_number_of_samples,  # how many samples should target recording have
+            transformation,
+        )
+
+
+class CommandsTestDataset(CommandsDataset):
+    def __init__(
+        self,
+        device,
+        target_sampling_rate,  # all returns samples will have this sr
+        target_number_of_samples,  # how many samples should target recording have
+        transformation,
+    ):
+        super().__init__(
+            "./train/testing_list.txt",  # path to txt file fith paths of audio files for test/train/validation - for instance ./train/validation_list.txt
             device,
             target_sampling_rate,  # all returns samples will have this sr
             target_number_of_samples,  # how many samples should target recording have
