@@ -34,7 +34,7 @@ class CNN_2d_Trainer:
                 optimiser.step()
 
             # save model
-            torch.save(model.state_dict(), "backup/cnn_2d_{epoch}")
+            torch.save(model.state_dict(), f"backup/cnn_2d_{epoch}")
 
 
 class CNN_2d(nn.Module):
