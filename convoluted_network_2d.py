@@ -21,6 +21,7 @@ class CNN_2d_Trainer:
             print(f"training {epoch} epoch")
 
             for input, target_output in data_loader:
+                # @TODO niepotrzebne przypisanie - juz w datasecie jest
                 input = input.to(self.device)
                 target_output = target_output.to(self.device)
 
