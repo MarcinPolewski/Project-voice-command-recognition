@@ -22,14 +22,18 @@ class XGBDataWrapper(Sequence):
     accessing a specific index of a pytorch DataSet like a list.
     """
 
-    def __init__(self, data, constantIndex) -> None:
+    def __init__(self, data, constantIndex, sendToGPU: False) -> None:
         self._data = data
         self._constantIndex = constantIndex
+        self._sendToGPU
 
     def __len__(self) -> int:
         return len(self._data)
 
     def __getitem__(self, index):
+        if self._sendToGPU:
+            tensor = self._data[index][self._constantIndex]
+            return tensor.detach().cpu().numpy()
         return self._data[index][self._constantIndex]
 
 
@@ -39,7 +43,8 @@ def getTrainingData() -> tuple:
     )
 
     pytorchDataset = CommandsTrainDataset(DEVICE, 16000, 16000, transformation)
-    trainingData = XGBDataWrapper(pytorchDataset, 0)
+    trainingData = XGBDataWrapper(pytorchDataset, 0, True if DEVICE == "cuda"
+                                  else False)
     trainingLabels = XGBDataWrapper(pytorchDataset, 1)
 
     return trainingData, trainingLabels
