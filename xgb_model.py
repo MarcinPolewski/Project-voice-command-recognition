@@ -22,10 +22,10 @@ class XGBDataWrapper(Sequence):
     accessing a specific index of a pytorch DataSet like a list.
     """
 
-    def __init__(self, data, constantIndex, sendToGPU: False) -> None:
+    def __init__(self, data, constantIndex, sendToGPU=False) -> None:
         self._data = data
         self._constantIndex = constantIndex
-        self._sendToGPU
+        self._sendToGPU = sendToGPU
 
     def __len__(self) -> int:
         return len(self._data)
