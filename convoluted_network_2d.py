@@ -2,9 +2,11 @@ from torch import nn
 from torch.utils.data import DataLoader
 import torch
 import torchaudio
+from tqdm import tqdm
+
 
 import constants
-from dataset_wrapper import CommandsTrainDataset
+from dataset_wrapper import CommandsTrainDataset, CommandsTestDataset, CommandsValidateDataset
 
 
 class CNN_2d_Trainer:
@@ -20,7 +22,7 @@ class CNN_2d_Trainer:
         for epoch in range(epochs):
             print(f"training {epoch} epoch")
 
-            for input, target_output in data_loader:
+            for input, target_output in tqdm(data_loader):
                 # @TODO niepotrzebne przypisanie - juz w datasecie jest
                 input = input.to(self.device)
                 target_output = target_output.to(self.device)
@@ -37,6 +39,51 @@ class CNN_2d_Trainer:
             # save model
             torch.save(model.state_dict(), f"backup/cnn_2d_{epoch}")
 
+class CNN_2d_Tester:
+
+    @staticmethod
+    def predict(model, input, target):
+        model.eval()
+        with torch.no_grad():
+            predictions = model(input)
+            predicted_index = predictions[0].argmax(0)
+            predicted = constants.CLASS_MAPPINGS[predicted_index]
+            expected = constants.CLASS_MAPPINGS[target]
+
+        return predicted, expected
+    
+    @staticmethod
+    def _test_base_method(model, device, dataset):        
+        data_loader = DataLoader(dataset=dataset, batch_size=1)
+
+        correct_predictions_count = 0
+
+        for model_input, expected_output in tqdm(data_loader):
+            predicted_class, expected_class = CNN_2d_Tester.predict(model, input, expected_output)
+            correct_predictions_count+=1
+            print(predicted_class, expected_class)
+
+        score = correct_predictions_count / len(dataset)
+        return score
+
+    @staticmethod
+    def test_model(model, device):
+            
+        target_sampling_rate = constants.SAMPLING_RATE
+        target_number_of_samples = constants.SAMPLE_COUNT
+        transformation = constants.TRANSFORMATION
+        
+        dataset = CommandsTestDataset(device, target_sampling_rate, target_number_of_samples, transformation)
+        return CNN_2d_Tester._test_base_method(model, device, dataset)
+
+    @staticmethod
+    def validate_model(model, device):
+        target_sampling_rate = constants.SAMPLING_RATE
+        target_number_of_samples = constants.SAMPLE_COUNT
+        transformation = constants.TRANSFORMATION
+
+        dataset = CommandsValidateDataset(device, target_sampling_rate, target_number_of_samples, transformation)
+        return CNN_2d_Tester._test_base_method(model, device, dataset)
 
 class CNN_2d(nn.Module):
     def __init__(self):
@@ -90,12 +137,22 @@ class CNN_2d(nn.Module):
         return predictions
 
 
-def main():
+def ex_main():
     print(str(torchaudio.list_audio_backends()))
 
+
+
+    # dataset = CommandsTrainDataset(
+    #     device, target_sampling_rate, target_number_of_samples, transformation
+    # )
+
+
+def train():
     device = "cpu"
     if torch.cuda.is_available():
         device = "cuda"
+    # elif torch.mps.is_available():
+    #     device = "mps"
 
     # ===== constants and declarations ====
     trainer = CNN_2d_Trainer(device)
@@ -111,9 +168,6 @@ def main():
     loss_function = nn.CrossEntropyLoss()
     optimiser = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
-    # dataset = CommandsTrainDataset(
-    #     device, target_sampling_rate, target_number_of_samples, transformation
-    # )
     dataset = CommandsTrainDataset(
         device=device,
         target_sampling_rate=target_sampling_rate,
@@ -130,7 +184,25 @@ def main():
         epochs=epochs,
         batch_size=batch_size,
     )
+def test():
+    # set device
+    device = "cpu"
+    if torch.cuda.is_available():
+        device = "cuda"
+    # elif torch.mps.is_available():
+    #     device = "mps"
 
+    # load model
+    model = CNN_2d()
+    state_dict = torch.load("backup/cnn_2d_9")
+    model.load_state_dict(state_dict)
+
+    score = CNN_2d_Tester.test_model(model, device)
+    print(f"accuracy: {score}")
+
+def main():
+    train()
+    test()
 
 if __name__ == "__main__":
     main()
