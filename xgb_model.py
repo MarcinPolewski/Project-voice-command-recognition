@@ -1,7 +1,6 @@
 from xgboost import XGBClassifier
 
 from sklearn.pipeline import Pipeline
-from category_encoders.target_encoder import TargetEncoder
 
 import torchaudio
 from dataset_wrapper import CommandsTrainDataset
@@ -9,6 +8,8 @@ from collections.abc import Sequence
 
 from skopt import BayesSearchCV
 from skopt.space import Real, Integer
+
+import numpy as np
 
 import torch
 
@@ -31,34 +32,36 @@ class XGBDataWrapper(Sequence):
         return len(self._data)
 
     def __getitem__(self, index):
+        tensor = self._data[index][self._constantIndex]
         if self._sendToGPU:
-            tensor = self._data[index][self._constantIndex]
+            tensor = tensor.flatten()
             return tensor.detach().cpu().numpy()
         return self._data[index][self._constantIndex]
 
 
 def getTrainingData() -> tuple:
-    transformation = torchaudio.transforms.MelSpectrogram(
-        sample_rate=16000, n_fft=1024, hop_length=512, n_mels=64
-    )
+    transformation = torchaudio.transforms.MFCC(sample_rate=16000, n_mfcc=40)
+
+    # MelSpectrogram(
+    #    sample_rate=16000, n_fft=1024, hop_length=512, n_mels=64
+    # )
 
     pytorchDataset = CommandsTrainDataset(DEVICE, 16000, 16000, transformation)
     trainingData = XGBDataWrapper(pytorchDataset, 0, True if DEVICE == "cuda"
                                   else False)
     trainingLabels = XGBDataWrapper(pytorchDataset, 1)
 
+    trainingData = np.array([item.flatten() for item in trainingData])
+    trainingLabels = np.array([item for item in trainingLabels])
+
     return trainingData, trainingLabels
 
 
 def createPipeline() -> Pipeline:
-    steps = [
-        ('targetEncoder', TargetEncoder())
-    ]
+    steps = []
     if DEVICE == "cuda":
         steps.append(('model', XGBClassifier(random_state=7,
-                                             tree_method='gpu_hist',
-                                             predictor='gpu_predictor',
-                                             gpu_id=0)))
+                                             device="cuda:0")))
     else:
         steps.append(('model', XGBClassifier(random_state=7)))
     return Pipeline(steps=steps)
@@ -77,8 +80,8 @@ def createHyperparameterOptimization(pipeline):
         'model__gamma': Real(0.0, 10.0)
     }
 
-    return BayesSearchCV(pipeline, hyperParametersLimits, cv=2, n_iter=1,
-                         scoring='roc_auc', random_state=7)
+    return BayesSearchCV(pipeline, hyperParametersLimits, cv=2, n_iter=30,
+                         scoring='accuracy', random_state=7)
 
 
 def main() -> None:
@@ -88,7 +91,7 @@ def main() -> None:
 
     search = createHyperparameterOptimization(pipe)
 
-    print(DEVICE)
+    print(f"Running on {DEVICE}")
 
     search.fit(trainingData, trainingLabels)
 
@@ -103,6 +106,10 @@ def main() -> None:
     print("Score")
     print(search.score(trainingData, trainingLabels))
     print("")
+
+    print("Predictions and data")
+    print(search.predict(trainingData))
+    print(trainingLabels)
 
 
 if __name__ == "__main__":
