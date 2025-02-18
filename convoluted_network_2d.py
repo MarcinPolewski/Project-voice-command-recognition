@@ -157,6 +157,7 @@ def train():
     # ===== constants and declarations ====
     trainer = CNN_2d_Trainer(device)
     model = CNN_2d()
+    model = model.to(device)
     target_sampling_rate = 16000
     target_number_of_samples = 16000
     transformation = torchaudio.transforms.MelSpectrogram(
@@ -196,6 +197,7 @@ def test():
     model = CNN_2d()
     state_dict = torch.load("backup/cnn_2d_9")
     model.load_state_dict(state_dict)
+    model = model.to(device)
 
     score = CNN_2d_Tester.test_model(model, device)
     print(f"accuracy: {score}")
