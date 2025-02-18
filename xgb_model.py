@@ -17,6 +17,10 @@ import torch
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 
+if DEVICE == "cuda":
+    import cupy as cp
+
+
 class XGBDataWrapper(Sequence):
     """
     This class is a wrapper which simulates
@@ -54,6 +58,9 @@ def getTrainingData() -> tuple:
     trainingData = np.array([item.flatten() for item in trainingData])
     trainingLabels = np.array([item for item in trainingLabels])
 
+    if DEVICE == "cuda":
+        trainingData = cp.asarray(trainingData)
+
     return trainingData, trainingLabels
 
 
@@ -80,7 +87,7 @@ def createHyperparameterOptimization(pipeline):
         'model__gamma': Real(0.0, 10.0)
     }
 
-    return BayesSearchCV(pipeline, hyperParametersLimits, cv=2, n_iter=30,
+    return BayesSearchCV(pipeline, hyperParametersLimits, cv=2, n_iter=10,
                          scoring='accuracy', random_state=7)
 
 
@@ -110,6 +117,10 @@ def main() -> None:
     print("Predictions and data")
     print(search.predict(trainingData))
     print(trainingLabels)
+
+    print("")
+    print("Saving model")
+    search.best_estimator_.steps[0].save_model("./xgboost_model_backup.json")
 
 
 if __name__ == "__main__":
