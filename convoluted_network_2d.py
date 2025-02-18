@@ -14,7 +14,7 @@ class CNN_2d_Trainer:
         self.device = device
 
     def _create_data_loader(self, dataset, batch_size):
-        return DataLoader(dataset, batch_size=batch_size)
+        return DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
     def train(self, model, dataset, loss_function, optimiser, epochs, batch_size):
         data_loader = self._create_data_loader(dataset, batch_size)
@@ -37,7 +37,7 @@ class CNN_2d_Trainer:
                 optimiser.step()
 
             # save model
-            torch.save(model.state_dict(), f"backup/cnn_2d_{epoch}")
+            torch.save(model.state_dict(), f"./backup/cnn_2d_{epoch}")
 
 class CNN_2d_Tester:
 
