@@ -120,7 +120,7 @@ def main() -> None:
 
     print("")
     print("Saving model")
-    search.best_estimator_.steps[0].save_model("./xgboost_model_backup.json")
+    search.best_estimator_.steps[0][1].save_model("./xgboost_model_backup.json")
 
 
 if __name__ == "__main__":
