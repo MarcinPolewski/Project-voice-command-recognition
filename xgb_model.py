@@ -20,6 +20,8 @@ import matplotlib.pyplot as plt
 import seaborn as sn
 from sklearn.metrics import confusion_matrix
 
+from constants import CLASS_MAPPINGS
+
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -114,6 +116,8 @@ def generateConfusionMatrix(model, data, labels):
         axis_labels = expected_labels
     else:
         axis_labels = predicted_labels
+
+    axis_labels = [CLASS_MAPPINGS[label] for label in axis_labels]
 
     fig, ax = plt.subplots(figsize=(8, 6))
     sn.heatmap(
