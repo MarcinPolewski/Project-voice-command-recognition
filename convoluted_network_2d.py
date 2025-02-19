@@ -14,7 +14,7 @@ class CNN_2d_Trainer:
         self.device = device
 
     def _create_data_loader(self, dataset, batch_size):
-        return DataLoader(dataset, batch_size=batch_size, shuffle=True)
+        return DataLoader(dataset, batch_size=batch_size, num_workers=4, shuffle=True, pin_memory=True)
 
     def train(self, model, dataset, loss_function, optimiser, epochs, batch_size):
         data_loader = self._create_data_loader(dataset, batch_size)
@@ -54,7 +54,7 @@ class CNN_2d_Tester:
     
     @staticmethod
     def _test_base_method(model, device, dataset):        
-        data_loader = DataLoader(dataset=dataset, batch_size=1)
+        data_loader = DataLoader(dataset=dataset, batch_size=1, num_workers=4)
 
         correct_predictions_count = 0
 
@@ -151,8 +151,8 @@ def train():
     device = "cpu"
     if torch.cuda.is_available():
         device = "cuda"
-    # elif torch.mps.is_available():
-    #     device = "mps"
+    elif torch.mps.is_available():
+        device = "mps"
 
     # ===== constants and declarations ====
     trainer = CNN_2d_Trainer(device)
@@ -190,12 +190,12 @@ def test():
     device = "cpu"
     if torch.cuda.is_available():
         device = "cuda"
-    # elif torch.mps.is_available():
-    #     device = "mps"
+    elif torch.mps.is_available():
+        device = "mps"
 
     # load model
     model = CNN_2d()
-    state_dict = torch.load("backup/cnn_2d_9")
+    state_dict = torch.load("backup/cnn_2d_1")
     model.load_state_dict(state_dict)
     model = model.to(device)
 
