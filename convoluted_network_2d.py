@@ -59,6 +59,8 @@ class CNN_2d_Tester:
         correct_predictions_count = 0
 
         for model_input, expected_output in tqdm(data_loader):
+            model_input = model_input.to(device)
+
             predicted_class, expected_class = CNN_2d_Tester.predict(model, model_input, expected_output)
             correct_predictions_count+=1
             print(predicted_class, expected_class)
