@@ -52,6 +52,8 @@ class CommandsDataset(Dataset):
         # Check if the file exists
         if not os.path.exists(sample_path):
             raise FileNotFoundError(f"File not found: {sample_path}")
+        elif not os.path.isfile(sample_path):
+            raise FileNotFoundError(f"NOT A FILE: {sample_path}")
 
         sample, sampling_rate = torchaudio.load(sample_path)
         sample.to(self.device)
