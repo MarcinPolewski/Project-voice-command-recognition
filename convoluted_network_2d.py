@@ -22,8 +22,13 @@ class CNN_2d_Trainer:
     def train(self, model, dataset, loss_function, optimiser, epochs, batch_size):
         data_loader = self._create_data_loader(dataset, batch_size)
 
+            
+        last_epoch_with_improvement = 0
+        last_best_score = 0
+
         for epoch in range(epochs):
             print(f"training {epoch} epoch")
+
             for input, target_output in tqdm(data_loader):
                 # @TODO niepotrzebne przypisanie - juz w datasecie jest
                 input = input.to(self.device)
@@ -37,6 +42,17 @@ class CNN_2d_Trainer:
                 optimiser.zero_grad()  # reset gradient values
                 loss.backward()
                 optimiser.step()
+
+            # validation after each epoch
+            validation_score = CNN_2d_Tester.validate_model(model, self.device)
+            print(f"score on validation: {validation_score}")
+            if (validation_score > last_best_score):
+                last_best_score = validation_score
+                last_epoch_with_improvement = epoch
+            elif epoch - last_epoch_with_improvement > constants.HOW_MANY_EPOCHS_WAIT_FOR_IMPROVEMENT:
+                print(f"early stop due to over fitting !!! Best epoch: {last_epoch_with_improvement}")
+                break
+
 
             # save model
             torch.save(model.state_dict(), f"./backup/cnn_2d_{epoch}")
