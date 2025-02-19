@@ -28,20 +28,18 @@ class CNN_1d(nn.Module):
             nn.Conv1d(
                 in_channels=1,
                 out_channels=32,
-                kernel_size=3,
+                kernel_size=5,
                 stride=1,
                 padding=1,
             ),
-            nn.BatchNorm1d(32),
             nn.ReLU(),
-            nn.MaxPool1d(kernel_size=2),
         )
 
         self.conv2 = nn.Sequential(
             nn.Conv1d(
                 in_channels=32,
                 out_channels=64,
-                kernel_size=3,
+                kernel_size=5,
                 stride=1,
                 padding=1,
             ),
@@ -58,9 +56,7 @@ class CNN_1d(nn.Module):
                 stride=1,
                 padding=1,
             ),
-            nn.BatchNorm1d(128),
             nn.ReLU(),
-            nn.MaxPool1d(kernel_size=2),
         )
 
         self.conv4 = nn.Sequential(
@@ -76,27 +72,14 @@ class CNN_1d(nn.Module):
             nn.MaxPool1d(kernel_size=2),
         )
 
-        self.conv5 = nn.Sequential(
-            nn.Conv1d(
-                in_channels=256,
-                out_channels=512,
-                kernel_size=3,
-                stride=1,
-                padding=1,
-            ),
-            nn.BatchNorm1d(512),
-            nn.ReLU(),
-            nn.MaxPool1d(kernel_size=2),
-        )
-
         # neural network
         self.avg = nn.AdaptiveAvgPool1d(1)
         self.flatten = nn.Flatten()
         self.dense = nn.Sequential(
-            nn.Dropout(),
-            nn.Linear(512, 128),
-            nn.Dropout(),
-            nn.Linear(128, len(constants.CLASS_MAPPINGS)),
+            nn.Dropout(p=0.2),
+            nn.Linear(256, 64),
+            nn.Dropout(p=0.2),
+            nn.Linear(64, len(constants.CLASS_MAPPINGS)),
         )
 
     def forward(self, input_data):
@@ -105,7 +88,6 @@ class CNN_1d(nn.Module):
         x = self.conv2(x)
         x = self.conv3(x)
         x = self.conv4(x)
-        x = self.conv5(x)
         x = self.avg(x)
         x = self.flatten(x)
         x = self.dense(x)
@@ -214,9 +196,9 @@ if __name__ == "__main__":
     trainer = CNN_1d_Trainer(device)
 
     # Configure model
-    epochs = 10
-    learning_rate = 0.001
-    batch_size = 128
+    epochs = 25
+    learning_rate = 0.0003
+    batch_size = 512
     target_sampling_rate = 16000
     target_number_of_samples = 16000
     loss_function = nn.CrossEntropyLoss()
