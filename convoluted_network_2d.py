@@ -7,6 +7,9 @@ from tqdm import tqdm
 
 import constants
 from dataset_wrapper import CommandsTrainDataset, CommandsTestDataset, CommandsValidateDataset
+import seaborn as sn
+from sklearn.metrics import confusion_matrix
+import matplotlib.pyplot as plt
 
 
 class CNN_2d_Trainer:
@@ -49,7 +52,23 @@ class CNN_2d_Tester:
             expected = constants.CLASS_MAPPINGS[target]
 
         return predicted, expected
-    
+
+    @staticmethod
+    def _generate_confusion_matrix(test_results):
+
+        conf_mat = confusion_matrix(
+            [expected for  expected,_ in test_results],
+            [predicted for _,predicted in test_results],
+        )
+        fig, ax = plt.subplots(figsize=(8, 6))
+        sn.heatmap(conf_mat, annot=True, cmap="Blues", fmt="d", ax=ax)
+        plt.xlabel("Expected")
+        plt.ylabel("Predicted")
+        # fig.set_size_inches(12, 9)
+        plt.tight_layout()
+        plt.savefig("./test_results/confusion_matrix.png")
+        #plt.close()
+
     @staticmethod
     def _test_base_method(model, device, dataset): 
         model.eval()      
@@ -71,6 +90,7 @@ class CNN_2d_Tester:
                 file.write(predicted_class + ","+ expected_class + "\n")
 
         score = correct_predictions_count / len(dataset)
+        CNN_2d_Tester._generate_confusion_matrix(test_results)
         model.train()
         return score
 
