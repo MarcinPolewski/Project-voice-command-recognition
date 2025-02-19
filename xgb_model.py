@@ -3,7 +3,7 @@ from xgboost import XGBClassifier
 from sklearn.pipeline import Pipeline
 
 import torchaudio
-from dataset_wrapper import CommandsTrainDataset
+from dataset_wrapper import CommandsTrainDataset, CommandsTestDataset
 from collections.abc import Sequence
 
 from skopt import BayesSearchCV
@@ -12,6 +12,8 @@ from skopt.space import Real, Integer
 import numpy as np
 
 import torch
+
+import time
 
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
@@ -43,14 +45,14 @@ class XGBDataWrapper(Sequence):
         return self._data[index][self._constantIndex]
 
 
-def getTrainingData() -> tuple:
+def getData(DatasetClass) -> tuple:
     transformation = torchaudio.transforms.MFCC(sample_rate=16000, n_mfcc=40)
 
     # MelSpectrogram(
     #    sample_rate=16000, n_fft=1024, hop_length=512, n_mels=64
     # )
 
-    pytorchDataset = CommandsTrainDataset(DEVICE, 16000, 16000, transformation)
+    pytorchDataset = DatasetClass(DEVICE, 16000, 16000, transformation)
     trainingData = XGBDataWrapper(pytorchDataset, 0, True if DEVICE == "cuda"
                                   else False)
     trainingLabels = XGBDataWrapper(pytorchDataset, 1)
@@ -87,40 +89,83 @@ def createHyperparameterOptimization(pipeline):
         'model__gamma': Real(0.0, 10.0)
     }
 
-    return BayesSearchCV(pipeline, hyperParametersLimits, cv=2, n_iter=10,
+    return BayesSearchCV(pipeline, hyperParametersLimits, cv=2, n_iter=100,
                          scoring='accuracy', random_state=7)
 
 
 def main() -> None:
-    trainingData, trainingLabels = getTrainingData()
+    print("Loading training data...")
+    startTime = time.perf_counter()
+    trainingData, trainingLabels = getData(CommandsTrainDataset)
+    endTime = time.perf_counter()
+    print("Loaded training data")
+    print(f"Loading time: {endTime - startTime}")
 
-    pipe = createPipeline()
+    # pipe = createPipeline()
 
-    search = createHyperparameterOptimization(pipe)
+    # search = createHyperparameterOptimization(pipe)
 
-    print(f"Running on {DEVICE}")
+    # print(f"Running on {DEVICE}")
 
-    search.fit(trainingData, trainingLabels)
+    # search.fit(trainingData, trainingLabels)
 
-    print("Best estimator")
-    print(search.best_estimator_)
+    # print("Best estimator")
+    # print(search.best_estimator_)
+    # print("")
+
+    # print("Best score")
+    # print(search.best_score_)
+    # print("")
+
+    # print("Score")
+    # print(search.score(trainingData, trainingLabels))
+    # print("")
+
+    # print("Predictions and data")
+    # print(search.predict(trainingData))
+    # print(trainingLabels)
+
+    # model = XGBClassifier()
+    # model.fit(trainingData, trainingLabels)
+    # model.score()
+
+    # print("")
+    # print("Saving model")
+    # model = search.best_estimator_.steps[0][1]
+    # model.save_model("./xgboost_model_backup.json")
+
+    startTime = time.perf_counter()
+    model = XGBClassifier()
+    model.fit(trainingData, trainingLabels)
+    endTime = time.perf_counter()
+
+    print(f"Training time: {endTime - startTime}")
     print("")
 
-    print("Best score")
-    print(search.best_score_)
+    print("Score on training data")
+    print(model.score(trainingData, trainingLabels))
     print("")
 
-    print("Score")
-    print(search.score(trainingData, trainingLabels))
+    print("Loading test data")
+    startTime = time.perf_counter()
+    testData, testLabels = getData(CommandsTestDataset)
+    endTime = time.perf_counter()
+    print("Test data loaded")
+    print(f"Loading time: {endTime - startTime}")
+
+    # model = XGBClassifier()
+    # model.load_model("./xgboost_model_backup.json")
+
+    print("")
+    print(f"Model score: {model.score(testData, testLabels)}")
     print("")
 
-    print("Predictions and data")
-    print(search.predict(trainingData))
-    print(trainingLabels)
+    print("Model prediction, data, search prediction")
+    print(model.predict(testData))
 
-    print("")
-    print("Saving model")
-    search.best_estimator_.steps[0][1].save_model("./xgboost_model_backup.json")
+    print(testLabels)
+
+    # print(search.predict(testData))
 
 
 if __name__ == "__main__":
