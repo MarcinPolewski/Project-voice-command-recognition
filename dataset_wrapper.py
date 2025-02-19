@@ -1,7 +1,6 @@
 import os
 from torch.utils.data import Dataset
 import torchaudio
-from train_list_generator import Train_List_Generator
 import constants
 import torch
 import hashlib
@@ -27,7 +26,6 @@ class CommandsDataset(Dataset):
         self.validation_percentage = constants.validation_percentage
         self.test_percentage = constants.test_percentage
 
-        Train_List_Generator.generate()
         self.dataset_group = dataset_group
         self.data = self._load_sound_list()
 

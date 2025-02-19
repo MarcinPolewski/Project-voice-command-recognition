@@ -17,26 +17,26 @@ CLASS_MAPPINGS = [
     "four",
     "go",
     "happy",
-    "house",
-    "left",
-    "marvin",
-    "nine",
-    "no",
-    "off",
-    "on",
-    "one",
-    "right",
-    "seven",
-    "sheila",
-    "six",
-    "stop",
-    "three",
-    "tree",
-    "two",
-    "up",
-    "wow",
-    "yes",
-    "zero",
+    # "house",
+    # "left",
+    # "marvin",
+    # "nine",
+    # "no",
+    # "off",
+    # "on",
+    # "one",
+    # "right",
+    # "seven",
+    # "sheila",
+    # "six",
+    # "stop",
+    # "three",
+    # "tree",
+    # "two",
+    # "up",
+    # "wow",
+    # "yes",
+    # "zero",
 ]
 
 MAX_NUM_WAVS_PER_CLASS = 2**27 - 1 
@@ -49,6 +49,8 @@ SAMPLE_COUNT = 16000
 N_FFT = 1024
 HOP_LENGTH=512
 N_MELS = 64
+
+HOW_MANY_EPOCHS_WAIT_FOR_IMPROVEMENT = 10
 
 TRANSFORMATION = torchaudio.transforms.MelSpectrogram(
         sample_rate=SAMPLING_RATE, n_fft=N_FFT, hop_length=HOP_LENGTH, n_mels=N_MELS

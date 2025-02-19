@@ -185,6 +185,9 @@ class CNN_2d(nn.Module):
             nn.MaxPool2d(kernel_size=2),
         )
 
+        self.dropout = nn.Dropout(p=0.5)
+
+
         # neural network:
         self.flatten = nn.Flatten()
         self.linear = nn.Linear(128 * 5 * 3, len(constants.CLASS_MAPPINGS))
@@ -196,6 +199,8 @@ class CNN_2d(nn.Module):
         x = self.convolution_3(x)
         x = self.convolution_4(x)
         x = self.flatten(x)
+        x = self.dropout(x)
+
         logits = self.linear(x)
         predictions = self.softmax(logits)
         return predictions
@@ -227,8 +232,8 @@ def train():
     transformation = torchaudio.transforms.MelSpectrogram(
         sample_rate=target_sampling_rate, n_fft=1024, hop_length=512, n_mels=64
     )
-    learning_rate = 0.01
-    epochs = 10
+    learning_rate = 0.0001
+    epochs = 100
     batch_size = 32
     loss_function = nn.CrossEntropyLoss()
     optimiser = torch.optim.Adam(model.parameters(), lr=learning_rate)
@@ -253,21 +258,65 @@ def test():
     # set device
     device = "cpu"
     if torch.cuda.is_available():
-        device = "cuda"
+        device = "cuda" 
     elif torch.mps.is_available():
         device = "mps"
 
     # load model
     model = CNN_2d()
-    state_dict = torch.load("backup/cnn_2d_49")
+    state_dict = torch.load("backup/cnn_2d_46")
     model.load_state_dict(state_dict)
     model = model.to(device)
 
     score = CNN_2d_Tester.test_model(model, device)
     print(f"accuracy: {score}")
 
+def continue_training():
+    device = "cpu"
+    if torch.cuda.is_available():
+        device = "cuda"
+    elif torch.mps.is_available():
+        device = "mps"
+
+    # ===== constants and declarations ====
+    trainer = CNN_2d_Trainer(device)
+    model = CNN_2d()
+
+    state_dict = torch.load("backup/cnn_2d_50")
+    model.load_state_dict(state_dict)
+
+    model = model.to(device)
+    target_sampling_rate = 16000
+    target_number_of_samples = 16000
+    transformation = torchaudio.transforms.MelSpectrogram(
+        sample_rate=target_sampling_rate, n_fft=1024, hop_length=512, n_mels=64
+    )
+    learning_rate = 0.00001
+    epochs = 50
+    batch_size = 32
+    loss_function = nn.CrossEntropyLoss()
+    optimiser = torch.optim.Adam(model.parameters(), lr=learning_rate)
+
+    dataset = CommandsTrainDataset(
+        device=device,
+        target_sampling_rate=target_sampling_rate,
+        target_number_of_samples=target_number_of_samples,
+        transformation=transformation,
+    )
+
+    # === actual training
+    trainer.train(
+        model=model,
+        dataset=dataset,
+        loss_function=loss_function,
+        optimiser=optimiser,
+        epochs=epochs,
+        batch_size=batch_size,
+    )
+
 def main():
-    # train()
-    test()
+    train()
+    # continue_training()
+    # test()
 if __name__ == "__main__":
     main()
