@@ -79,6 +79,12 @@ class CNN_2d_Tester:
         expected_labels = sorted(set([expected for expected, _ in test_results]))
         predicted_labels = sorted(set([predicted for _, predicted in test_results]))
 
+        axis_labels = None
+        if(len(expected_labels) > len(predicted_labels)):
+            axis_labels = expected_labels
+        else:
+            axis_labels = predicted_labels
+
         fig, ax = plt.subplots(figsize=(8, 6))
         sn.heatmap(
             conf_mat,
@@ -86,8 +92,8 @@ class CNN_2d_Tester:
             cmap="Blues",
             fmt="d",
             ax=ax,
-            xticklabels=predicted_labels,
-            yticklabels=expected_labels,
+            xticklabels=axis_labels,
+            yticklabels=axis_labels,
         )
         plt.xlabel("Predicted")
         plt.ylabel("Expected")
@@ -106,7 +112,7 @@ class CNN_2d_Tester:
 
         with open("./test_results/test_result_2.csv", "w") as file:
             file.write("predicted,expected\n")
-            for model_input, expected_output in tqdm(data_loader):
+            for model_input, expected_output in data_loader:
                 model_input = model_input.to(device)
 
                 predicted_class, expected_class = CNN_2d_Tester.predict(model, model_input, expected_output)
@@ -116,9 +122,8 @@ class CNN_2d_Tester:
                 file.write(predicted_class + ","+ expected_class + "\n")
 
         score = correct_predictions_count / len(dataset)
-        CNN_2d_Tester._generate_confusion_matrix(test_results)
         model.train()
-        return score
+        return score, test_results
 
     @staticmethod
     def test_model(model, device):
@@ -128,7 +133,10 @@ class CNN_2d_Tester:
         transformation = constants.TRANSFORMATION
         
         dataset = CommandsTestDataset(device, target_sampling_rate, target_number_of_samples, transformation)
-        return CNN_2d_Tester._test_base_method(model, device, dataset)
+        score, test_results = CNN_2d_Tester._test_base_method(model, device, dataset)
+        CNN_2d_Tester._generate_confusion_matrix(test_results)
+
+        return score
 
     @staticmethod
     def validate_model(model, device):
@@ -137,7 +145,9 @@ class CNN_2d_Tester:
         transformation = constants.TRANSFORMATION
 
         dataset = CommandsValidateDataset(device, target_sampling_rate, target_number_of_samples, transformation)
-        return CNN_2d_Tester._test_base_method(model, device, dataset)
+        score, test_results = CNN_2d_Tester._test_base_method(model, device, dataset)
+
+        return score
 
 class CNN_2d(nn.Module):
     def __init__(self):
