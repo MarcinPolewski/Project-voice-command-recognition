@@ -21,7 +21,6 @@ class CNN_2d_Trainer:
 
         for epoch in range(epochs):
             print(f"training {epoch} epoch")
-
             for input, target_output in tqdm(data_loader):
                 # @TODO niepotrzebne przypisanie - juz w datasecie jest
                 input = input.to(self.device)
@@ -43,7 +42,6 @@ class CNN_2d_Tester:
 
     @staticmethod
     def predict(model, input, target):
-        model.eval()
         with torch.no_grad():
             predictions = model(input)
             predicted_index = predictions[0].argmax(0)
@@ -53,7 +51,8 @@ class CNN_2d_Tester:
         return predicted, expected
     
     @staticmethod
-    def _test_base_method(model, device, dataset):        
+    def _test_base_method(model, device, dataset): 
+        model.eval()      
         data_loader = DataLoader(dataset=dataset, batch_size=1, num_workers=4)
 
         correct_predictions_count = 0
@@ -62,10 +61,12 @@ class CNN_2d_Tester:
             model_input = model_input.to(device)
 
             predicted_class, expected_class = CNN_2d_Tester.predict(model, model_input, expected_output)
-            correct_predictions_count+=1
+            if predicted_class == expected_class:
+                correct_predictions_count+=1
             print(predicted_class, expected_class)
 
         score = correct_predictions_count / len(dataset)
+        model.train()
         return score
 
     @staticmethod
@@ -197,7 +198,7 @@ def test():
 
     # load model
     model = CNN_2d()
-    state_dict = torch.load("backup/cnn_2d_1")
+    state_dict = torch.load("backup/cnn_2d_9")
     model.load_state_dict(state_dict)
     model = model.to(device)
 
@@ -206,7 +207,7 @@ def test():
 
 def main():
     train()
-    test()
+    # test()
 
 if __name__ == "__main__":
     main()
