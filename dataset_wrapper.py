@@ -155,3 +155,20 @@ class CommandsTestDataset(CommandsDataset):
             target_number_of_samples,  # how many samples should target recording have
             transformation,
         )
+
+
+class CommandsValidateDataset(CommandsDataset):
+    def __init__(
+        self,
+        device,
+        target_sampling_rate,  # all returns samples will have this sr
+        target_number_of_samples,  # how many samples should target recording have
+        transformation,
+    ):
+        super().__init__(
+            "./train/validation_list.txt",  # path to txt file fith paths of audio files for test/train/validation - for instance ./train/validation_list.txt
+            device,
+            target_sampling_rate,  # all returns samples will have this sr
+            target_number_of_samples,  # how many samples should target recording have
+            transformation,
+        )

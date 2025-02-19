@@ -4,6 +4,7 @@ from sklearn.pipeline import Pipeline
 
 import torchaudio
 from dataset_wrapper import CommandsTrainDataset, CommandsTestDataset
+from dataset_wrapper import CommandsValidateDataset
 from collections.abc import Sequence
 
 from skopt import BayesSearchCV
@@ -134,36 +135,52 @@ def main() -> None:
     # model = search.best_estimator_.steps[0][1]
     # model.save_model("./xgboost_model_backup.json")
 
+    print("Loading validation data...")
     startTime = time.perf_counter()
-    model = XGBClassifier()
-    model.fit(trainingData, trainingLabels)
+    validationData, validationLabels = getData(CommandsValidateDataset)
     endTime = time.perf_counter()
-
-    print(f"Training time: {endTime - startTime}")
-    print("")
-
-    print("Score on training data")
-    print(model.score(trainingData, trainingLabels))
-    print("")
-
-    print("Loading test data")
-    startTime = time.perf_counter()
-    testData, testLabels = getData(CommandsTestDataset)
-    endTime = time.perf_counter()
-    print("Test data loaded")
+    print("Loaded validation data")
     print(f"Loading time: {endTime - startTime}")
+
+    for x in [3, 4, 5, 6, 7, 8, 9, 10]:
+
+        startTime = time.perf_counter()
+        model = XGBClassifier()
+        model.fit(trainingData, trainingLabels, max_depth=x)
+        endTime = time.perf_counter()
+        model.save_model(f"./xgboost_model_backup_max_depth_{x}.json")
+
+        print(f"Max depth: {x}")
+
+        print(f"Training time: {endTime - startTime}")
+        print("")
+
+        print("Score on training data")
+        print(model.score(trainingData, trainingLabels))
+        print("")
+
+        print("Score on validation data")
+        print(model.score(trainingData, trainingLabels))
+        print("")
+
+    # print("Loading test data")
+    # startTime = time.perf_counter()
+    # testData, testLabels = getData(CommandsTestDataset)
+    # endTime = time.perf_counter()
+    # print("Test data loaded")
+    # print(f"Loading time: {endTime - startTime}")
 
     # model = XGBClassifier()
     # model.load_model("./xgboost_model_backup.json")
 
-    print("")
-    print(f"Model score: {model.score(testData, testLabels)}")
-    print("")
+    # print("")
+    # print(f"Model score: {model.score(testData, testLabels)}")
+    # print("")
 
-    print("Model prediction, data, search prediction")
-    print(model.predict(testData))
+    # print("Model prediction, data, search prediction")
+    # print(model.predict(testData))
 
-    print(testLabels)
+    # print(testLabels)
 
     # print(search.predict(testData))
 
