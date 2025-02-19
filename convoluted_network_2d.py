@@ -57,13 +57,15 @@ class CNN_2d_Tester:
 
         correct_predictions_count = 0
 
-        for model_input, expected_output in tqdm(data_loader):
-            model_input = model_input.to(device)
+        with open("./test_results/test_result_2.csv", "w") as file:
+            file.write("predicted,expected\n")
+            for model_input, expected_output in tqdm(data_loader):
+                model_input = model_input.to(device)
 
-            predicted_class, expected_class = CNN_2d_Tester.predict(model, model_input, expected_output)
-            if predicted_class == expected_class:
-                correct_predictions_count+=1
-            print(predicted_class, expected_class)
+                predicted_class, expected_class = CNN_2d_Tester.predict(model, model_input, expected_output)
+                if predicted_class == expected_class:
+                    correct_predictions_count+=1
+                file.write(predicted_class + ","+ expected_class + "\n")
 
         score = correct_predictions_count / len(dataset)
         model.train()
@@ -198,7 +200,7 @@ def test():
 
     # load model
     model = CNN_2d()
-    state_dict = torch.load("backup/cnn_2d_9")
+    state_dict = torch.load("backup/cnn_2d_49")
     model.load_state_dict(state_dict)
     model = model.to(device)
 
@@ -206,8 +208,7 @@ def test():
     print(f"accuracy: {score}")
 
 def main():
-    train()
-    # test()
-
+    # train()
+    test()
 if __name__ == "__main__":
     main()
