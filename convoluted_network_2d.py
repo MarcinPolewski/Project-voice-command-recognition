@@ -57,14 +57,24 @@ class CNN_2d_Tester:
     def _generate_confusion_matrix(test_results):
 
         conf_mat = confusion_matrix(
-            [expected for  expected,_ in test_results],
-            [predicted for _,predicted in test_results],
+            [expected for expected, _ in test_results],
+            [predicted for _, predicted in test_results],
         )
+        expected_labels = sorted(set([expected for expected, _ in test_results]))
+        predicted_labels = sorted(set([predicted for _, predicted in test_results]))
+
         fig, ax = plt.subplots(figsize=(8, 6))
-        sn.heatmap(conf_mat, annot=True, cmap="Blues", fmt="d", ax=ax)
-        plt.xlabel("Expected")
-        plt.ylabel("Predicted")
-        # fig.set_size_inches(12, 9)
+        sn.heatmap(
+            conf_mat,
+            annot=True,
+            cmap="Blues",
+            fmt="d",
+            ax=ax,
+            xticklabels=predicted_labels,
+            yticklabels=expected_labels,
+        )
+        plt.xlabel("Predicted")
+        plt.ylabel("Expected")
         plt.tight_layout()
         plt.savefig("./test_results/confusion_matrix.png")
         #plt.close()
