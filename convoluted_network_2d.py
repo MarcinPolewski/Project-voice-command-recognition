@@ -57,6 +57,8 @@ class CNN_2d_Tester:
 
         correct_predictions_count = 0
 
+        test_results =[]
+
         with open("./test_results/test_result_2.csv", "w") as file:
             file.write("predicted,expected\n")
             for model_input, expected_output in tqdm(data_loader):
@@ -65,6 +67,7 @@ class CNN_2d_Tester:
                 predicted_class, expected_class = CNN_2d_Tester.predict(model, model_input, expected_output)
                 if predicted_class == expected_class:
                     correct_predictions_count+=1
+                test_results.append([predicted_class, expected_class])
                 file.write(predicted_class + ","+ expected_class + "\n")
 
         score = correct_predictions_count / len(dataset)
