@@ -16,6 +16,8 @@ import torch
 
 import time
 
+import xgboost as xgb
+
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -142,40 +144,43 @@ def main() -> None:
     print("Loaded validation data")
     print(f"Loading time: {endTime - startTime}")
 
-    for x in [3, 4, 5, 6, 7, 8, 9, 10]:
+    eval_set = [(trainingData, trainingLabels),
+                (validationData, validationLabels)]
+    early_stopping = xgb.callback.EarlyStopping(rounds=10,
+                                                metric_name="logloss",
+                                                maximize=False)
 
-        startTime = time.perf_counter()
-        model = XGBClassifier()
-        model.fit(trainingData, trainingLabels, max_depth=x)
-        endTime = time.perf_counter()
-        model.save_model(f"./xgboost_model_backup_max_depth_{x}.json")
+    startTime = time.perf_counter()
+    model = XGBClassifier()
+    model.fit(trainingData, trainingLabels,
+              eval_set=eval_set, callbacks=[early_stopping])
+    endTime = time.perf_counter()
+    model.save_model("./xgboost_model_backup.json")
 
-        print(f"Max depth: {x}")
+    print(f"Training time: {endTime - startTime}")
+    print("")
 
-        print(f"Training time: {endTime - startTime}")
-        print("")
+    print("Score on training data")
+    print(model.score(trainingData, trainingLabels))
+    print("")
 
-        print("Score on training data")
-        print(model.score(trainingData, trainingLabels))
-        print("")
+    print("Score on validation data")
+    print(model.score(trainingData, trainingLabels))
+    print("")
 
-        print("Score on validation data")
-        print(model.score(trainingData, trainingLabels))
-        print("")
-
-    # print("Loading test data")
-    # startTime = time.perf_counter()
-    # testData, testLabels = getData(CommandsTestDataset)
-    # endTime = time.perf_counter()
-    # print("Test data loaded")
-    # print(f"Loading time: {endTime - startTime}")
+    print("Loading test data")
+    startTime = time.perf_counter()
+    testData, testLabels = getData(CommandsTestDataset)
+    endTime = time.perf_counter()
+    print("Test data loaded")
+    print(f"Loading time: {endTime - startTime}")
 
     # model = XGBClassifier()
     # model.load_model("./xgboost_model_backup.json")
 
-    # print("")
-    # print(f"Model score: {model.score(testData, testLabels)}")
-    # print("")
+    print("")
+    print(f"Model score: {model.score(testData, testLabels)}")
+    print("")
 
     # print("Model prediction, data, search prediction")
     # print(model.predict(testData))
