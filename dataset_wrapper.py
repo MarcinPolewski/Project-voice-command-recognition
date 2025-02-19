@@ -124,7 +124,7 @@ class CommandsDataset(Dataset):
         percentage_hash = ((int(hash_name_hashed, 16) %
                             (constants.MAX_NUM_WAVS_PER_CLASS + 1)) *
                             (100.0 / constants.MAX_NUM_WAVS_PER_CLASS))
-        
+
         if percentage_hash < self.validation_percentage:
             return constants.DatasetGroup.VALIDATE
         elif percentage_hash < (self.test_percentage + self.validation_percentage):
@@ -148,17 +148,14 @@ class CommandsDataset(Dataset):
     #             data_row = [path, sample_class]
     #             data.append(data_row)
 
-
-
     #     return data
-
 
     def _load_sound_list(self):
 
         data = []
 
         base_path = constants.AUDIO_BASE_PATH
-        
+
         for class_name in constants.CLASS_MAPPINGS:
             class_folder_path = base_path + class_name
             all_files_of_this_class = os.listdir(class_folder_path)
@@ -175,6 +172,7 @@ class CommandsDataset(Dataset):
 
         return data
 
+
 class CommandsTrainDataset(CommandsDataset):
     def __init__(
         self,
@@ -184,7 +182,7 @@ class CommandsTrainDataset(CommandsDataset):
         transformation,
     ):
         super().__init__(
-            constants.DatasetGroup.TRAIN,  
+            constants.DatasetGroup.TRAIN,
             device,
             target_sampling_rate,  # all returns samples will have this sr
             target_number_of_samples,  # how many samples should target recording have
@@ -201,12 +199,13 @@ class CommandsTestDataset(CommandsDataset):
         transformation,
     ):
         super().__init__(
-            constants.DatasetGroup.TEST, 
+            constants.DatasetGroup.TEST,
             device,
             target_sampling_rate,  # all returns samples will have this sr
             target_number_of_samples,  # how many samples should target recording have
             transformation,
         )
+
 
 class CommandsValidateDataset(CommandsDataset):
     def __init__(
@@ -217,15 +216,16 @@ class CommandsValidateDataset(CommandsDataset):
         transformation,
     ):
         super().__init__(
-            constants.DatasetGroup.VALIDATE,  
+            constants.DatasetGroup.VALIDATE,
             device,
             target_sampling_rate,  # all returns samples will have this sr
             target_number_of_samples,  # how many samples should target recording have
             transformation,
         )
 
+
 if __name__ == "__main__":
-    trans  = torchaudio.transforms.MelSpectrogram(
+    trans = torchaudio.transforms.MelSpectrogram(
         sample_rate=16000, n_fft=1024, hop_length=512, n_mels=64
     )
     ds = CommandsTestDataset("cpu", 16000, 16000, trans)
