@@ -16,7 +16,9 @@ import torch
 
 import time
 
-import xgboost as xgb
+import matplotlib.pyplot as plt
+import seaborn as sn
+from sklearn.metrics import confusion_matrix
 
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
@@ -96,13 +98,46 @@ def createHyperparameterOptimization(pipeline):
                          scoring='accuracy', random_state=7)
 
 
+def generateConfusionMatrix(model, data, labels):
+    predicted = model.predict(data)
+    test_results = list(zip(labels, predicted))
+
+    conf_mat = confusion_matrix(
+        [expected for expected, _ in test_results],
+        [predicted for _, predicted in test_results],
+    )
+    expected_labels = sorted(set([expected for expected, _ in test_results]))
+    predicted_labels = sorted(set([predicted for _, predicted in test_results]))
+
+    axis_labels = None
+    if (len(expected_labels) > len(predicted_labels)):
+        axis_labels = expected_labels
+    else:
+        axis_labels = predicted_labels
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+    sn.heatmap(
+        conf_mat,
+        annot=True,
+        cmap="Blues",
+        fmt="d",
+        ax=ax,
+        xticklabels=axis_labels,
+        yticklabels=axis_labels,
+    )
+    plt.xlabel("Predicted")
+    plt.ylabel("Expected")
+    plt.tight_layout()
+    plt.savefig("./confusion_matrix.png")
+
+
 def main() -> None:
-    print("Loading training data...")
-    startTime = time.perf_counter()
-    trainingData, trainingLabels = getData(CommandsTrainDataset)
-    endTime = time.perf_counter()
-    print("Loaded training data")
-    print(f"Loading time: {endTime - startTime}")
+    # print("Loading training data...")
+    # startTime = time.perf_counter()
+    # trainingData, trainingLabels = getData(CommandsTrainDataset)
+    # endTime = time.perf_counter()
+    # print("Loaded training data")
+    # print(f"Loading time: {endTime - startTime}")
 
     # pipe = createPipeline()
 
@@ -137,36 +172,29 @@ def main() -> None:
     # model = search.best_estimator_.steps[0][1]
     # model.save_model("./xgboost_model_backup.json")
 
-    print("Loading validation data...")
-    startTime = time.perf_counter()
-    validationData, validationLabels = getData(CommandsValidateDataset)
-    endTime = time.perf_counter()
-    print("Loaded validation data")
-    print(f"Loading time: {endTime - startTime}")
+    # print("Loading validation data...")
+    # startTime = time.perf_counter()
+    # validationData, validationLabels = getData(CommandsValidateDataset)
+    # endTime = time.perf_counter()
+    # print("Loaded validation data")
+    # print(f"Loading time: {endTime - startTime}")
 
-    eval_set = [(trainingData, trainingLabels),
-                (validationData, validationLabels)]
-    early_stopping = xgb.callback.EarlyStopping(rounds=10,
-                                                metric_name="logloss",
-                                                maximize=False)
+    # startTime = time.perf_counter()
+    # model = XGBClassifier()
+    # model.fit(trainingData, trainingLabels)
+    # endTime = time.perf_counter()
+    # model.save_model("./xgboost_model_backup.json")
 
-    startTime = time.perf_counter()
-    model = XGBClassifier()
-    model.fit(trainingData, trainingLabels,
-              eval_set=eval_set, callbacks=[early_stopping])
-    endTime = time.perf_counter()
-    model.save_model("./xgboost_model_backup.json")
+    # print(f"Training time: {endTime - startTime}")
+    # print("")
 
-    print(f"Training time: {endTime - startTime}")
-    print("")
+    # print("Score on training data")
+    # print(model.score(trainingData, trainingLabels))
+    # print("")
 
-    print("Score on training data")
-    print(model.score(trainingData, trainingLabels))
-    print("")
-
-    print("Score on validation data")
-    print(model.score(trainingData, trainingLabels))
-    print("")
+    # print("Score on validation data")
+    # print(model.score(trainingData, trainingLabels))
+    # print("")
 
     print("Loading test data")
     startTime = time.perf_counter()
@@ -175,12 +203,12 @@ def main() -> None:
     print("Test data loaded")
     print(f"Loading time: {endTime - startTime}")
 
-    # model = XGBClassifier()
-    # model.load_model("./xgboost_model_backup.json")
+    model = XGBClassifier()
+    model.load_model("./backup/xgb_backups/xgboost_model_100_64.json")
 
-    print("")
-    print(f"Model score: {model.score(testData, testLabels)}")
-    print("")
+    # print("")
+    # print(f"Model score: {model.score(testData, testLabels)}")
+    # print("")
 
     # print("Model prediction, data, search prediction")
     # print(model.predict(testData))
@@ -188,6 +216,8 @@ def main() -> None:
     # print(testLabels)
 
     # print(search.predict(testData))
+
+    generateConfusionMatrix(model, testData, testLabels)
 
 
 if __name__ == "__main__":
