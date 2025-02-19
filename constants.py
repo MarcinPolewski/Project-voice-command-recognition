@@ -1,4 +1,5 @@
 from enum import Enum
+import torchaudio
 
 TRAIN_LIST_PATH = "./train/train_list.txt"
 VALIDATE_LIST_PATH = "./train/validation_list.txt"
@@ -42,6 +43,16 @@ MAX_NUM_WAVS_PER_CLASS = 2**27 - 1
 
 validation_percentage = 10.0
 test_percentage = 10.0
+
+SAMPLING_RATE = 16000
+SAMPLE_COUNT = 16000
+N_FFT = 1024
+HOP_LENGTH=512
+N_MELS = 64
+
+TRANSFORMATION = torchaudio.transforms.MelSpectrogram(
+        sample_rate=SAMPLING_RATE, n_fft=N_FFT, hop_length=HOP_LENGTH, n_mels=N_MELS
+    )
 
 class DatasetGroup(Enum):
     TRAIN = 0
