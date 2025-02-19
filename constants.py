@@ -38,12 +38,12 @@ CLASS_MAPPINGS = [
     "zero",
 ]
 
-MAX_NUM_WAVS_PER_CLASS = 2**27 - 1 
+MAX_NUM_WAVS_PER_CLASS = 2**27 - 1
 
 validation_percentage = 10.0
 test_percentage = 10.0
 
 class DatasetGroup(Enum):
     TRAIN = 0
-    VALIDATE = 1 
+    VALIDATE = 1
     TEST = 2
