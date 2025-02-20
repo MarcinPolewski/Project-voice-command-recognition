@@ -32,7 +32,9 @@ class CNN_1d(nn.Module):
                 stride=1,
                 padding=1,
             ),
+            nn.BatchNorm1d(32),
             nn.ReLU(),
+            nn.MaxPool1d(kernel_size=2),
         )
 
         self.conv2 = nn.Sequential(
@@ -56,7 +58,9 @@ class CNN_1d(nn.Module):
                 stride=1,
                 padding=1,
             ),
+            nn.BatchNorm1d(128),
             nn.ReLU(),
+            nn.MaxPool1d(kernel_size=2),
         )
 
         self.conv4 = nn.Sequential(
@@ -196,8 +200,8 @@ if __name__ == "__main__":
     trainer = CNN_1d_Trainer(device)
 
     # Configure model
-    epochs = 25
-    learning_rate = 0.0003
+    epochs = 100
+    learning_rate = 0.00005
     batch_size = 512
     target_sampling_rate = 16000
     target_number_of_samples = 16000
