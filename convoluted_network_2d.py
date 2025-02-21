@@ -30,7 +30,6 @@ class CNN_2d_Trainer:
             print(f"training {epoch} epoch")
 
             for input, target_output in tqdm(data_loader):
-                # @TODO niepotrzebne przypisanie - juz w datasecie jest
                 input = input.to(self.device)
                 target_output = target_output.to(self.device)
 
@@ -158,7 +157,7 @@ class CNN_2d(nn.Module):
                 in_channels=1, out_channels=16, kernel_size=3, stride=1, padding=2
             ),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2),
+            nn.AvgPool2d(kernel_size=2),
         )
 
         self.convolution_2 = nn.Sequential(
@@ -166,7 +165,7 @@ class CNN_2d(nn.Module):
                 in_channels=16, out_channels=32, kernel_size=3, stride=1, padding=2
             ),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2),
+            nn.AvgPool2d(kernel_size=2),
         )
 
         self.convolution_3 = nn.Sequential(
@@ -174,7 +173,7 @@ class CNN_2d(nn.Module):
                 in_channels=32, out_channels=64, kernel_size=3, stride=1, padding=2
             ),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2),
+            nn.AvgPool2d(kernel_size=2),
         )
 
         self.convolution_4 = nn.Sequential(
@@ -182,15 +181,20 @@ class CNN_2d(nn.Module):
                 in_channels=64, out_channels=128, kernel_size=3, stride=1, padding=2
             ),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2),
+            nn.AvgPool2d(kernel_size=2),
         )
 
-        self.dropout = nn.Dropout(p=0.5)
+        self.dropout = nn.Dropout(p=0.2)
 
 
         # neural network:
         self.flatten = nn.Flatten()
-        self.linear = nn.Linear(128 * 5 * 3, len(constants.CLASS_MAPPINGS))
+        self.linear1 = nn.Linear(128 * 5 * 3, 64)
+        self.dropout1 = nn.Dropout(p=0.2)
+
+        self.linear2 = nn.Linear(64, len(constants.CLASS_MAPPINGS))
+        self.dropout2 = nn.Dropout(p=0.2)
+        
         self.softmax = nn.Softmax(dim=1)
 
     def forward(self, input_data):
@@ -201,20 +205,14 @@ class CNN_2d(nn.Module):
         x = self.flatten(x)
         x = self.dropout(x)
 
-        logits = self.linear(x)
-        predictions = self.softmax(logits)
+        x = self.linear1(x)
+        x = self.dropout1(x)
+        
+        x = self.linear2(x)
+        x = self.dropout2(x)
+
+        predictions = self.softmax(x)
         return predictions
-
-
-def ex_main():
-    print(str(torchaudio.list_audio_backends()))
-
-
-
-    # dataset = CommandsTrainDataset(
-    #     device, target_sampling_rate, target_number_of_samples, transformation
-    # )
-
 
 def train():
     device = "cpu"
@@ -232,8 +230,8 @@ def train():
     transformation = torchaudio.transforms.MelSpectrogram(
         sample_rate=target_sampling_rate, n_fft=1024, hop_length=512, n_mels=64
     )
-    learning_rate = 0.0001
-    epochs = 100
+    learning_rate = 0.00009
+    epochs = 200
     batch_size = 32
     loss_function = nn.CrossEntropyLoss()
     optimiser = torch.optim.Adam(model.parameters(), lr=learning_rate)
@@ -254,7 +252,8 @@ def train():
         epochs=epochs,
         batch_size=batch_size,
     )
-def test():
+
+def test(epoch_idx):
     # set device
     device = "cpu"
     if torch.cuda.is_available():
@@ -264,59 +263,16 @@ def test():
 
     # load model
     model = CNN_2d()
-    state_dict = torch.load("backup/cnn_2d_46")
+    state_dict = torch.load(f"backup/cnn_2d_{epoch_idx}") # specify which version from which epoch to take
     model.load_state_dict(state_dict)
     model = model.to(device)
 
     score = CNN_2d_Tester.test_model(model, device)
     print(f"accuracy: {score}")
 
-def continue_training():
-    device = "cpu"
-    if torch.cuda.is_available():
-        device = "cuda"
-    elif torch.mps.is_available():
-        device = "mps"
-
-    # ===== constants and declarations ====
-    trainer = CNN_2d_Trainer(device)
-    model = CNN_2d()
-
-    state_dict = torch.load("backup/cnn_2d_50")
-    model.load_state_dict(state_dict)
-
-    model = model.to(device)
-    target_sampling_rate = 16000
-    target_number_of_samples = 16000
-    transformation = torchaudio.transforms.MelSpectrogram(
-        sample_rate=target_sampling_rate, n_fft=1024, hop_length=512, n_mels=64
-    )
-    learning_rate = 0.00001
-    epochs = 50
-    batch_size = 32
-    loss_function = nn.CrossEntropyLoss()
-    optimiser = torch.optim.Adam(model.parameters(), lr=learning_rate)
-
-    dataset = CommandsTrainDataset(
-        device=device,
-        target_sampling_rate=target_sampling_rate,
-        target_number_of_samples=target_number_of_samples,
-        transformation=transformation,
-    )
-
-    # === actual training
-    trainer.train(
-        model=model,
-        dataset=dataset,
-        loss_function=loss_function,
-        optimiser=optimiser,
-        epochs=epochs,
-        batch_size=batch_size,
-    )
 
 def main():
     train()
-    # continue_training()
-    # test()
+    test(49)
 if __name__ == "__main__":
     main()
