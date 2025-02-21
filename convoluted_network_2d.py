@@ -184,11 +184,20 @@ class CNN_2d(nn.Module):
             nn.AvgPool2d(kernel_size=2),
         )
 
-        self.dropout = nn.Dropout(p=0.2)
 
 
         # neural network:
         self.flatten = nn.Flatten()
+        self.dropout = nn.Dropout(p=0.2)
+        
+        self.linear1 = nn.Linear(128 * 5 * 3, 64)
+        self.dropout1 = nn.Dropout(p=0.2)
+
+        self.linear2 = nn.Linear(64, len(constants.CLASS_MAPPINGS))
+        self.dropout2 = nn.Dropout(p=0.2)
+        
+        self.dropout = nn.Dropout(p=0.2)
+
         self.linear1 = nn.Linear(128 * 5 * 3, 64)
         self.dropout1 = nn.Dropout(p=0.2)
 
