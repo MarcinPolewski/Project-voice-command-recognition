@@ -3,3 +3,5 @@ test/*
 .venv
 __pycache__
 .DS_Store
+backup*/*
+test_results/*

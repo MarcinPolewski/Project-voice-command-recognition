@@ -50,9 +50,14 @@ N_FFT = 1024
 HOP_LENGTH=512
 N_MELS = 64
 
+HOW_MANY_EPOCHS_WAIT_FOR_IMPROVEMENT = 10
+
 TRANSFORMATION = torchaudio.transforms.MelSpectrogram(
-        sample_rate=SAMPLING_RATE, n_fft=N_FFT, hop_length=HOP_LENGTH, n_mels=N_MELS
-    )
+    sample_rate=SAMPLING_RATE,  # The sampling rate of the audio input
+    n_fft=N_FFT,                # The size of the FFT(Fast Fourier Transform) - so basically resolution of frequency axis
+    hop_length=HOP_LENGTH,      # The number of audio samples between frames - step between fft windows - "resolution" of time axis
+    n_mels=N_MELS               # The number of mel filterbanks - how many frequency bins will spectrogram have
+)
 
 class DatasetGroup(Enum):
     TRAIN = 0
