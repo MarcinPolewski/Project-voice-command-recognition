@@ -33,7 +33,7 @@ This project was craeted for GOLEM - AI student society at Warsaw University of 
 ## CNN 2d - results:
 - this architecutre scored 87% accuracy on test set
 - below I attach confuction matrix of this model:
-![CNN 2d confusion matrix](cnn_2d_confusion_matrix)
+![CNN 2d confusion matrix](cnn_2d_confusion_matrix.png)
 
 ## Use instruction
 1. download dataset from here: https://www.kaggle.com/competitions/tensorflow-speech-recognition-challenge/overview
